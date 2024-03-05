@@ -163,7 +163,7 @@ public:
         std::size_t iter = 0;
         m_thing->updateNormal(m_normal);
         double initialVx = m_normal.x;
-        std::cout << std::setprecision(20);
+        std::cout << std::setprecision(8);
 
         for (; iter < m_iterCount; ++iter)
         {
@@ -183,6 +183,13 @@ public:
         m_result = {initialVx - m_normal.x, m_thing->getProjectionSpan()};
     }
 
+    void test()
+    {
+        m_thing->updateNormal({-6.4, -3.9});
+        m_thing->calculateProjections();
+        std::cout << "span: " << m_thing->getProjectionSpan();
+    }
+
     auto getResult()
     {
         return m_result;
@@ -200,9 +207,9 @@ private:
     Thing* m_thing;
     Vector m_normal;
 
-    uint32_t m_iterCount = {150000000};
+    uint32_t m_iterCount = {600000000};
     uint32_t m_printEvery = {m_iterCount / 10};
-    double m_dx = {0.00000005};
+    double m_dx = {0.00000001};
 
     std::pair<double, double> m_result;
 
@@ -234,6 +241,7 @@ int main()
     std::cout << "----------\n";
     std::cout << "v_x = " << numericMinimizer.getResult().first << ", span = " << numericMinimizer.getResult().second << '\n';
 
+    //numericMinimizer.test();
 
     return 0;
 }
