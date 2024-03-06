@@ -163,7 +163,7 @@ public:
         std::size_t iter = 0;
         m_thing->updateNormal(m_normal);
         double initialVx = m_normal.x;
-        std::cout << std::setprecision(8);
+        std::cout << std::setprecision(20);
 
         for (; iter < m_iterCount; ++iter)
         {
@@ -181,13 +181,47 @@ public:
                 std::cout << "normal_x = " << m_normal.x << ", span: " << m_thing->getProjectionSpan()<< '\n';
         }
         m_result = {initialVx - m_normal.x, m_thing->getProjectionSpan()};
+        m_normal = {initialVx, m_normal.y};
     }
 
-    void test()
+    void computeOptimilized()
     {
-        m_thing->updateNormal({-6.4, -3.9});
-        m_thing->calculateProjections();
-        std::cout << "span: " << m_thing->getProjectionSpan();
+        m_thing->updateNormal(m_normal);
+        double initialX = m_normal.x;
+        double minSpan = iteration(m_normal);
+        
+        double intervalStart = -100;
+        double intervalEnd = 100;
+
+        double dx = 0.1;
+        double x = intervalStart;
+        double minX = 0;
+        std::uint32_t iter = 0;
+
+        std::cout << std::setprecision(15);
+        // converges pretty fast so the number of iterations should be small
+        while (true)
+        {
+            while (x < intervalEnd)
+            {
+                double newSpan = iteration({x, m_normal.y});
+                if (newSpan < minSpan)
+                {
+                    minSpan = newSpan;
+                    minX = x;
+                }
+                x += dx;
+            }
+            x = minX - dx;
+            intervalEnd = minX + dx;
+            dx = dx / 2;
+            iter++;
+            if (iter % m_printEvery == 0)
+                std::cout << "["<< iter << "]: " << "normal_x = " << x << ", span: " << m_thing->getProjectionSpan()<< '\n';
+            if (iter > m_iterCount)
+                break;
+        }
+        m_result = {initialX - x, m_thing->getProjectionSpan()};
     }
 
     auto getResult()
@@ -207,9 +241,9 @@ private:
     Thing* m_thing;
     Vector m_normal;
 
-    uint32_t m_iterCount = {600000000};
-    uint32_t m_printEvery = {m_iterCount / 10};
-    double m_dx = {0.00000001};
+    uint32_t m_iterCount = {40};
+    uint32_t m_printEvery = 5;
+    double m_dx = {0.00000005};
 
     std::pair<double, double> m_result;
 
@@ -236,12 +270,10 @@ int main()
 
     NumericMinimizer numericMinimizer(thing);
     numericMinimizer.loadInitialNormal(normal);
-    numericMinimizer.compute();
+    numericMinimizer.computeOptimilized();
 
-    std::cout << "----------\n";
     std::cout << "v_x = " << numericMinimizer.getResult().first << ", span = " << numericMinimizer.getResult().second << '\n';
 
-    //numericMinimizer.test();
 
     return 0;
 }
